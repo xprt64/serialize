@@ -31,7 +31,6 @@ class ObjectHydrator
      */
     public function hydrateObject(string $objectClass, $serializedValue)
     {
-        // echo "hydrateObject($objectClass)\n";
         try {
             return $this->castValueToBuiltinType($objectClass, $serializedValue);
         } catch (ValueNotScalar $exception) {
@@ -47,15 +46,7 @@ class ObjectHydrator
     {
         $reflectionClass = new \ReflectionClass($objectClass);
 
-        //       try {
         $object = unserialize($this->getEmptyObject($objectClass));
-        ///       } catch (\Throwable $exception) {
-//            echo "EXCEPTION: hydrateObjectByReflection($objectClass): \n";
-//            var_dump($exception);
-//            var_dump($document);
-//            echo "\n";
-        //           throw $exception;
-        //      }
 
         $this->matchAndSetNonConstructorProperties($reflectionClass, $object, $document);
 
@@ -85,16 +76,16 @@ class ObjectHydrator
     private function castValueToBuiltinType($type, $value)
     {
         switch ((string)$type) {
-            case 'string' :
+            case 'string':
                 return strval($value);
-            case 'int' :
+            case 'int':
                 return intval($value);
-            case 'float' :
+            case 'float':
                 return floatval($value);
-            case 'bool' :
+            case 'bool':
             case 'boolean' :
                 return boolval($value);
-            case 'null' :
+            case 'null':
                 return null;
             default:
                 throw new ValueNotScalar("Unknown builtin type: $type");
