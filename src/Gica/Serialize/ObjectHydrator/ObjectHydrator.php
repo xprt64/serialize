@@ -78,18 +78,22 @@ class ObjectHydrator
         switch ((string)$type) {
             case 'string':
                 return strval($value);
+
             case 'int':
                 return intval($value);
+
             case 'float':
                 return floatval($value);
+
             case 'bool':
-            case 'boolean' :
+            case 'boolean':
                 return boolval($value);
+
             case 'null':
                 return null;
-            default:
-                throw new ValueNotScalar("Unknown builtin type: $type");
         }
+
+        throw new ValueNotScalar("Unknown builtin type: $type");
     }
 
     private function detectIfPropertyIsArrayFromComment(\ReflectionClass $reflectionClass, string $propertyName)
