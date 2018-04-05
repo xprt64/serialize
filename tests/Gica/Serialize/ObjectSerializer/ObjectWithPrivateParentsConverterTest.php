@@ -44,7 +44,6 @@ class ObjectWithPrivateParentsConverterTest extends \PHPUnit_Framework_TestCase
     }
 }
 
-
 class MyParent2
 {
     private $t2_a;
@@ -56,6 +55,7 @@ class MyParent2
         $this->t2_b = $t2_b;
     }
 }
+
 class MyParent1 extends MyParent2
 {
     private $t1_a;
@@ -67,9 +67,7 @@ class MyParent1 extends MyParent2
         $this->t1_a = $t1_a;
         $this->t1_b = $t1_b;
     }
-
 }
-
 
 class MyObject extends MyParent1
 {
