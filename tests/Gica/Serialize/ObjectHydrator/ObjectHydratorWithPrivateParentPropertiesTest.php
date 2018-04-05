@@ -18,9 +18,10 @@ class ObjectHydratorWithPrivateParentPropertiesTest extends \PHPUnit_Framework_T
         $document = [
             'a'    => 'a',
             'b'    => 'b',
+            'n'    => ['p' => 32],
             't1_a' => 11,
             't1_b' => 't1_b',
-            't2_a' => 't2_a',
+            't2_a' => 56,
             't2_b' => 't2_b',
         ];
 
@@ -36,11 +37,16 @@ class ObjectHydratorWithPrivateParentPropertiesTest extends \PHPUnit_Framework_T
         $this->assertSame($document['t1_b'], $reconstructed->getT1B());
         $this->assertSame($document['t2_a'], $reconstructed->getT2A());
         $this->assertSame($document['t2_b'], $reconstructed->getT2B());
+        $this->assertInstanceOf(SomeNestedObject::class, $reconstructed->getN());
+        $this->assertSame($document['n']['p'], $reconstructed->getN()->getP());
     }
 }
 
 class MyParent2
 {
+    /**
+     * @var int
+     */
     private $t2_a;
     private $t2_b;
 
@@ -89,6 +95,9 @@ class MyObject extends MyParent1
     private $a;
     private $b;
 
+    /** @var SomeNestedObject */
+    private $n;
+
     public function __construct($a, $b, $t1_a, $t1_b, $t2_a, $t2_b)
     {
         parent::__construct($t1_a, $t1_b, $t2_a, $t2_b);
@@ -104,5 +113,28 @@ class MyObject extends MyParent1
     public function getB()
     {
         return $this->b;
+    }
+
+    public function getN(): SomeNestedObject
+    {
+        return $this->n;
+    }
+}
+
+class SomeNestedObject
+{
+    /**
+     * @var int
+     */
+    private $p;
+
+    public function __construct($p)
+    {
+        $this->p = $p;
+    }
+
+    public function getP(): int
+    {
+        return $this->p;
     }
 }

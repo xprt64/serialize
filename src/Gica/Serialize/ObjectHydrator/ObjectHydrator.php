@@ -216,7 +216,7 @@ class ObjectHydrator
 
     private function parseTypeFromPropertyVarDoc(\ReflectionClass $reflectionClass, string $propertyName)
     {
-        $property = $reflectionClass->getProperty($propertyName);
+        $property = $this->getClassProperty($reflectionClass, $propertyName);
 
         if (!preg_match('#\@var\s+(?P<shortType>[\\\\a-z0-9_\]\[]+)#ims', $property->getDocComment(), $m)) {
             throw new \Exception("Could not detect type from vardoc for property {$propertyName}");
