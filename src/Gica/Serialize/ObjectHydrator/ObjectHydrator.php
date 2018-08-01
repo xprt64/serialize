@@ -79,6 +79,9 @@ class ObjectHydrator
             case 'string':
                 return strval($value);
 
+            case 'mixed':
+                return $value;
+
             case 'int':
                 return intval($value);
 
@@ -98,31 +101,44 @@ class ObjectHydrator
 
     private function detectIfPropertyIsArrayFromComment(\ReflectionClass $reflectionClass, string $propertyName)
     {
+        static $cache = [];
+        $cacheId = $reflectionClass->getName() . '-' . $propertyName;
+        if (!isset($cache[$cacheId])) {
+            $cache[$cacheId] = $this->_detectIfPropertyIsArrayFromComment($reflectionClass, $propertyName);
+        }
+        return $cache[$cacheId];
+    }
+
+    private function _detectIfPropertyIsArrayFromComment(\ReflectionClass $reflectionClass, string $propertyName)
+    {
         $shortType = $this->parseTypeFromPropertyVarDoc($reflectionClass, $propertyName);
-
         $len = strlen($shortType);
-
         if ($len < 3) {
             return false;
         }
-
         return $shortType[$len - 2] === '[' && $shortType[$len - 1] === ']';
     }
 
     private function detectClassNameFromPropertyComment(\ReflectionClass $reflectionClass, string $propertyName)
     {
+        static $cache = [];
+        $cacheId = $reflectionClass->getName() . '-' . $propertyName;
+        if (!isset($cache[$cacheId])) {
+            $cache[$cacheId] = $this->_detectClassNameFromPropertyComment($reflectionClass, $propertyName);
+        }
+        return $cache[$cacheId];
+    }
+
+    private function _detectClassNameFromPropertyComment(\ReflectionClass $reflectionClass, string $propertyName)
+    {
         $shortType = $this->parseTypeFromPropertyVarDoc($reflectionClass, $propertyName);
-
         $shortType = rtrim($shortType, '[]');
-
         if ('array' === $shortType) {
             return null;
         }
-
         if ('\\' == $shortType[0]) {
             return ltrim($shortType, '\\');
         }
-
         if ($this->isScalar($shortType)) {
             return $shortType;
         }
@@ -132,8 +148,16 @@ class ObjectHydrator
 
     private function resolveShortClassName($shortName, \ReflectionClass $contextClass)
     {
-        return (new FqnResolver())->resolveShortClassName($shortName, $contextClass);
-
+        $className = (new FqnResolver())->resolveShortClassName($shortName, $contextClass);
+        if (!class_exists($className)) {
+            foreach ($contextClass->getTraits() as $trait) {
+                $className = (new FqnResolver())->resolveShortClassName($shortName, $trait);
+                if (class_exists($className)) {
+                    return $className;
+                }
+            }
+        }
+        return $className;
     }
 
     private function matchAndSetNonConstructorProperties(\ReflectionClass $reflectionClass, $object, $document): void
@@ -161,7 +185,6 @@ class ObjectHydrator
     public function hydrateObjectProperty($objectClass, string $propertyName, $document)
     {
         $reflectionClass = new \ReflectionClass($objectClass);
-
         return $this->hydrateProperty($reflectionClass, $propertyName, $document);
     }
 
@@ -205,6 +228,20 @@ class ObjectHydrator
      * @return bool
      */
     private function isScalar($shortType): bool
+    {
+        static $cache = [];
+        $cacheId = $shortType;
+        if (!isset($cache[$cacheId])) {
+            $cache[$cacheId] = $this->_isScalar($shortType);
+        }
+        return $cache[$cacheId];
+    }
+
+    /**
+     * @param $shortType
+     * @return bool
+     */
+    private function _isScalar($shortType): bool
     {
         try {
             $this->castValueToBuiltinType($shortType, '1');
