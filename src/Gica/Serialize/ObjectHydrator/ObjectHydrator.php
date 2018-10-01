@@ -58,7 +58,7 @@ class ObjectHydrator
         return 'O:' . strlen($className) . ':"' . $className . '":0:{}';
     }
 
-    private function getClassProperty(\ReflectionClass $reflectionClass, string $propertyName):?\ReflectionProperty
+    private function getClassProperty(\ReflectionClass $reflectionClass, string $propertyName): ?\ReflectionProperty
     {
         if (!$reflectionClass->hasProperty($propertyName)) {
 
@@ -83,14 +83,28 @@ class ObjectHydrator
                 return $value;
 
             case 'int':
-                return intval($value);
+                if (\is_int($value)) {
+                    return $value;
+                }
+                if (ctype_digit($value)) {
+                    return intval($value);
+                }
+                return null;
 
             case 'float':
                 return floatval($value);
 
             case 'bool':
             case 'boolean':
-                return boolval($value);
+                if (\is_bool($value)) {
+                    return $value;
+                }
+                if ($value === '1' || $value === 'true') {
+                    return true;
+                } else if ($value === '0' || $value === 'false') {
+                    return false;
+                }
+                return null;
 
             case 'null':
                 return null;

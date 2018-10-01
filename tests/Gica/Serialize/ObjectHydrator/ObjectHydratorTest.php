@@ -31,8 +31,8 @@ class ObjectHydratorTest extends \PHPUnit_Framework_TestCase
             'propertyWithDocError'  => 2,
             'propertyWithShortType' => 2,
 
-            'someNonExistingProperty' => 123,
-            'propertyWithUnknownArray' => [1,2,3],
+            'someNonExistingProperty'  => 123,
+            'propertyWithUnknownArray' => [1, 2, 3],
         ];
 
         $sut = new ObjectHydrator(new CompositeObjectUnserializer([new DateTimeImmutableFromString()]));
@@ -69,7 +69,6 @@ class ObjectHydratorTest extends \PHPUnit_Framework_TestCase
             'someArray'    => [4, 6, 8],
             'someNull'     => 'not-null-value',
             'someRealNull' => null,
-
         ];
 
         $sut = new ObjectHydrator(new CompositeObjectUnserializer([]));
@@ -84,6 +83,31 @@ class ObjectHydratorTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($document['someFloat'], $sut->hydrateObjectProperty(MyObject::class, 'someFloat', $document['someFloat']));
         $this->assertNull($sut->hydrateObjectProperty(MyObject::class, 'someNull', null));
         $this->assertNull($sut->hydrateObject('null', 'someRealNull'));
+    }
+
+    /**
+     * @dataProvider scalarValues
+     */
+    public function test_hydrateProperty_scalar($type, $input, $expected)
+    {
+        $sut = new ObjectHydrator(new CompositeObjectUnserializer([]));
+        $this->assertSame($expected, $sut->hydrateObject($type, $input));
+    }
+
+    public function scalarValues()
+    {
+        return [
+            ['string', 'a', 'a'],
+            ['int', 0, 0],
+            ['int', '0', 0],
+            ['int', '1', 1],
+            ['int', '', null],
+            ['bool', '1', true],
+            ['bool', 'true', true],
+            ['bool', '0', false],
+            ['bool', 'false', false],
+            ['float', '1.2', 1.2],
+        ];
     }
 }
 
