@@ -86,8 +86,8 @@ class ObjectHydrator
                 if (\is_int($value)) {
                     return $value;
                 }
-                if (ctype_digit($value)) {
-                    return intval($value);
+                if (is_string($value) && ($value === (string)((int)$value))) {
+                    return (int)$value;
                 }
                 return null;
 
