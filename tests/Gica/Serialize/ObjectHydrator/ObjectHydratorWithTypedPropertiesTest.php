@@ -3,14 +3,14 @@
  * Copyright (c) 2017 Constantin Galbenu <gica.galbenu@gmail.com>             *
  ******************************************************************************/
 
-namespace tests\unit\Gica\Serialize;
+namespace tests\unit\Gica\Serialize\ObjectHydratorWithTypedPropertiesTest;
 
 
 use Gica\Serialize\ObjectHydrator\ObjectHydrator;
 use Gica\Serialize\ObjectHydrator\ObjectUnserializer\CompositeObjectUnserializer;
 use Gica\Serialize\ObjectHydrator\ObjectUnserializer\DateTimeImmutableFromString;
 
-class ObjectHydratorTest extends \PHPUnit_Framework_TestCase
+class ObjectHydratorWithTypedPropertiesTest extends \PHPUnit_Framework_TestCase
 {
 
     public function test_hydrateObject()
@@ -29,7 +29,7 @@ class ObjectHydratorTest extends \PHPUnit_Framework_TestCase
             'someArray'             => [4, 6, 8],
             'someNull'              => 'not-null-value',
             'propertyWithDocError'  => 2,
-            'propertyWithShortType' => 22,
+            'propertyWithShortType' => 2,
 
             'someNonExistingProperty'  => 123,
             'propertyWithUnknownArray' => [1, 2, 3],
@@ -46,12 +46,7 @@ class ObjectHydratorTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($document['someInt'], $reconstructed->getSomeInt());
         $this->assertSame($document['someString'], $reconstructed->getSomeString());
         $this->assertEquals($dateTimeImmutable, $reconstructed->getDateTimeImmutable());
-        $this->assertSame($document['someVar'], $reconstructed->getSomeVar());
-        $this->assertSame($document['someArray'], $reconstructed->getSomeArray());
         $this->assertSame($document['someBool'], $reconstructed->getSomeBool());
-        $this->assertSame($document['someNull'], $reconstructed->getSomeNull());
-        $this->assertSame($document['propertyWithDocError'], $reconstructed->propertyWithDocError);
-        $this->assertSame($document['propertyWithUnknownArray'], $reconstructed->propertyWithUnknownArray);
     }
 
     public function test_hydrateObjectProperty()
@@ -84,159 +79,70 @@ class ObjectHydratorTest extends \PHPUnit_Framework_TestCase
         $this->assertNull($sut->hydrateObjectProperty(MyObject::class, 'someNull', null));
         $this->assertNull($sut->hydrateObject('null', 'someRealNull'));
     }
-
-    /**
-     * @dataProvider scalarValues
-     */
-    public function test_hydrateProperty_scalar($type, $input, $expected)
-    {
-        $sut = new ObjectHydrator(new CompositeObjectUnserializer([]));
-        $this->assertSame($expected, $sut->hydrateObject($type, $input));
-    }
-
-    public function scalarValues()
-    {
-        return [
-            ['string', 'a', 'a'],
-            ['int', 0, 0],
-            ['int', '0', 0],
-            ['int', '1', 1],
-            ['int', '', null],
-            ['bool', '1', true],
-            ['bool', 'true', true],
-            ['bool', '0', false],
-            ['bool', 'false', false],
-            ['float', '1.2', 1.2],
-        ];
-    }
 }
 
 class MyObject
 {
-    /**
-     * @var MyNestedObject
-     */
-    private $nestedObject;
-    /**
-     * @var int
-     */
-    private $someInt;
-
-    /** @var float */
-    private $someFloat;
-    /**
-     * @var string
-     */
-    private $someString;
-    private $someVar;
-    /**
-     * @var \DateTimeImmutable
-     */
-    private $dateTimeImmutable;
-
-    /**
-     * @var int[]
-     */
-    private $someArray;
-    /**
-     * @var bool
-     */
-    private $someBool;
-    /**
-     * @var boolean
-     */
-    private $someBoolean;
-    /**
-     * @var null
-     */
-    private $someNull;
-
-    /** @var  [] */
-    public $propertyWithDocError;
-
-    /** @var  a */
-    public $propertyWithShortType;
-
-    /** @var  array */
-    public $propertyWithUnknownArray;
+    private ?MyNestedObject $nestedObject;
+    private int $someInt;
+    private ?int $someIntOptional;
+    private float $someFloat;
+    private string $someString;
+    private ?\DateTimeImmutable $dateTimeImmutable;
+    private bool $someBool;
 
     public function __construct(
         ?MyNestedObject $nestedObject,
-        ?int $someInt,
+        int $someInt,
+        ?int $someIntOptional,
+        float $someFloat,
         ?string $someString,
         ?\DateTimeImmutable $dateTimeImmutable,
-        $someVar = null,
-        array $someArray = null,
-        bool $someBool = false,
-        $someNull = null
+        bool $someBool
     )
     {
         $this->nestedObject = $nestedObject;
         $this->someInt = $someInt;
         $this->someString = $someString;
-        $this->someVar = $someVar;
         $this->dateTimeImmutable = $dateTimeImmutable;
-        $this->someArray = $someArray;
         $this->someBool = $someBool;
-        $this->someNull = $someNull;
+        $this->someIntOptional = $someIntOptional;
+        $this->someFloat = $someFloat;
     }
 
-    /**
-     * @return MyNestedObject
-     */
-    public function getNestedObject(): MyNestedObject
+    public function getNestedObject(): ?MyNestedObject
     {
         return $this->nestedObject;
     }
 
-    /**
-     * @return int
-     */
     public function getSomeInt(): int
     {
         return $this->someInt;
     }
 
-    /**
-     * @return string
-     */
+    public function getSomeIntOptional(): ?int
+    {
+        return $this->someIntOptional;
+    }
+
+    public function getSomeFloat(): float
+    {
+        return $this->someFloat;
+    }
+
     public function getSomeString(): string
     {
         return $this->someString;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getSomeVar()
-    {
-        return $this->someVar;
-    }
-
-    /**
-     * @return \DateTimeImmutable
-     */
-    public function getDateTimeImmutable(): \DateTimeImmutable
+    public function getDateTimeImmutable(): ?\DateTimeImmutable
     {
         return $this->dateTimeImmutable;
-    }
-
-    public function getSomeArray()
-    {
-        return $this->someArray;
     }
 
     public function getSomeBool(): bool
     {
         return $this->someBool;
-    }
-
-    /**
-     * @return null
-     */
-    public function getSomeNull()
-    {
-        return $this->someNull;
     }
 }
 

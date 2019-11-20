@@ -19,8 +19,7 @@ class ObjectHydrator
 
     public function __construct(
         ObjectUnserializer $objectUnserializer
-    )
-    {
+    ) {
         $this->objectUnserializer = $objectUnserializer;
     }
 
@@ -59,6 +58,16 @@ class ObjectHydrator
     }
 
     private function getClassProperty(\ReflectionClass $reflectionClass, string $propertyName): ?\ReflectionProperty
+    {
+        static $cache = [];
+        $cache_id = $reflectionClass->getName() . '::' . $propertyName;
+        if (!isset($cache[$cache_id])) {
+            $cache[$cache_id] = $this->_getClassProperty($reflectionClass, $propertyName);
+        }
+        return $cache[$cache_id];
+    }
+
+    private function _getClassProperty(\ReflectionClass $reflectionClass, string $propertyName): ?\ReflectionProperty
     {
         if (!$reflectionClass->hasProperty($propertyName)) {
 
@@ -101,8 +110,10 @@ class ObjectHydrator
                 }
                 if ($value === '1' || $value === 'true') {
                     return true;
-                } else if ($value === '0' || $value === 'false') {
-                    return false;
+                } else {
+                    if ($value === '0' || $value === 'false') {
+                        return false;
+                    }
                 }
                 return null;
 
@@ -126,6 +137,9 @@ class ObjectHydrator
     private function _detectIfPropertyIsArrayFromComment(\ReflectionClass $reflectionClass, string $propertyName)
     {
         $shortType = $this->parseTypeFromPropertyVarDoc($reflectionClass, $propertyName);
+        if (null === $shortType) {
+            return false;
+        }
         $len = strlen($shortType);
         if ($len < 3) {
             return false;
@@ -147,6 +161,9 @@ class ObjectHydrator
     {
         $shortType = $this->parseTypeFromPropertyVarDoc($reflectionClass, $propertyName);
         $shortType = rtrim($shortType, '[]');
+        if ($shortType === '' || null === $shortType) {
+            return null;
+        }
         if ('array' === $shortType) {
             return null;
         }
@@ -208,9 +225,24 @@ class ObjectHydrator
             return null;
         }
 
+        $isArray = null;
+
         if (!$actualClassName) {
             try {
-                $propertyClassName = $this->detectClassNameFromPropertyComment($reflectionClass, $propertyName);
+                $reflectionType = $this->detectClassNameFromPropertyType($reflectionClass, $propertyName);
+                $reflectionTypeString = null;
+                if ($reflectionType) {
+                    $isArray = false;
+                    if ($reflectionType->isBuiltin()) {
+                        if ($actualClassName === 'array') {
+                            $isArray = true;
+                        } else {
+                            return $this->castValueToBuiltinType($reflectionType->__toString(), $document);
+                        }
+                    }
+                    $reflectionTypeString = $reflectionType->__toString();
+                }
+                $propertyClassName = $reflectionTypeString ?? $this->detectClassNameFromPropertyComment($reflectionClass, $propertyName);
             } catch (\Exception $exception) {
                 $propertyClassName = null;
             }
@@ -222,7 +254,9 @@ class ObjectHydrator
             $propertyClassName = $actualClassName;
         }
 
-        $isArray = $this->detectIfPropertyIsArrayFromComment($reflectionClass, $propertyName);
+        if (null === $isArray) {
+            $isArray = $this->detectIfPropertyIsArrayFromComment($reflectionClass, $propertyName);
+        }
 
         if ($isArray) {
             $result = [];
@@ -232,7 +266,6 @@ class ObjectHydrator
         } else {
             $result = $this->hydrateObject($propertyClassName, $document);
         }
-
 
         return $result;
     }
@@ -269,9 +302,21 @@ class ObjectHydrator
     {
         $property = $this->getClassProperty($reflectionClass, $propertyName);
 
-        if (!preg_match('#\@var\s+(?P<shortType>[\\\\a-z0-9_\]\[]+)#ims', $property->getDocComment(), $m)) {
-            throw new \Exception("Could not detect type from vardoc for property {$propertyName}");
+        if (!preg_match('#\@var\s+(?P<shortType>[\\\\a-z0-9_\]\[]+)#ims', $property->getDocComment() ?? '', $m)) {
+            return null;
         }
         return $m['shortType'];
+    }
+
+    private function detectClassNameFromPropertyType(\ReflectionClass $reflectionClass, string $propertyName): ?\ReflectionType
+    {
+        $property = $this->getClassProperty($reflectionClass, $propertyName);
+        if (!$property) {
+            return null;
+        }
+        if ($property->hasType()) {
+            return $property->getType();
+        }
+        return null;
     }
 }
