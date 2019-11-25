@@ -233,14 +233,15 @@ class ObjectHydrator
                 $reflectionTypeString = null;
                 if ($reflectionType) {
                     $isArray = false;
+                    $reflectionTypeString = $reflectionType->__toString();
                     if ($reflectionType->isBuiltin()) {
-                        if ($actualClassName === 'array') {
+                        if ($reflectionTypeString === 'array') {
                             $isArray = true;
+                            unset($reflectionTypeString);
                         } else {
                             return $this->castValueToBuiltinType($reflectionType->__toString(), $document);
                         }
                     }
-                    $reflectionTypeString = $reflectionType->__toString();
                 }
                 $propertyClassName = $reflectionTypeString ?? $this->detectClassNameFromPropertyComment($reflectionClass, $propertyName);
             } catch (\Exception $exception) {

@@ -64,6 +64,7 @@ class ObjectHydratorWithTypedPropertiesTest extends \PHPUnit_Framework_TestCase
             'someArray'    => [4, 6, 8],
             'someNull'     => 'not-null-value',
             'someRealNull' => null,
+            'someStrings' => ['a', 'bb', 'ccc']
         ];
 
         $sut = new ObjectHydrator(new CompositeObjectUnserializer([]));
@@ -76,6 +77,7 @@ class ObjectHydratorWithTypedPropertiesTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($document['someBoolean'], $sut->hydrateObjectProperty(MyObject::class, 'someBoolean', $document['someBoolean']));
         $this->assertSame($document['someNull'], $sut->hydrateObjectProperty(MyObject::class, 'someNull', $document['someNull']));
         $this->assertSame($document['someFloat'], $sut->hydrateObjectProperty(MyObject::class, 'someFloat', $document['someFloat']));
+        $this->assertSame($document['someStrings'], $sut->hydrateObjectProperty(MyObject::class, 'someStrings', $document['someStrings']));
         $this->assertNull($sut->hydrateObjectProperty(MyObject::class, 'someNull', null));
         $this->assertNull($sut->hydrateObject('null', 'someRealNull'));
     }
@@ -90,6 +92,9 @@ class MyObject
     private string $someString;
     private ?\DateTimeImmutable $dateTimeImmutable;
     private bool $someBool;
+
+    /** @var string[] */
+    public array $someStrings = [];
 
     public function __construct(
         ?MyNestedObject $nestedObject,
