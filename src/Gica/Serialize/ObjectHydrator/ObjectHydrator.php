@@ -49,13 +49,13 @@ class ObjectHydrator
 
         $this->matchAndSetNonConstructorProperties($reflectionClass, $object, $document);
 
-        if(is_callable([$object, 'isNull'])){
-            if($object->isNull()){
+        if (is_callable([$object, 'isNull'])) {
+            if ($object->isNull()) {
                 return null;
             }
         }
 
-        if(is_callable([$object, 'validateSelfOrThrow'])){
+        if (is_callable([$object, 'validateSelfOrThrow'])) {
             $object->validateSelfOrThrow();
         }
 
@@ -214,6 +214,9 @@ class ObjectHydrator
                 $result = $this->hydrateProperty($reflectionClass, $propertyName, $value, $actualClassName);
 
                 $property = $this->getClassProperty($reflectionClass, $propertyName);
+                if (null === $result && ($property->getType() && !$property->getType()->allowsNull())) {
+                    continue;
+                }
                 $property->setAccessible(true);
                 $property->setValue($object, $result);
                 $property->setAccessible(false);
