@@ -49,6 +49,16 @@ class ObjectHydrator
 
         $this->matchAndSetNonConstructorProperties($reflectionClass, $object, $document);
 
+        if(is_callable([$object, 'isNull'])){
+            if($object->isNull()){
+                return null;
+            }
+        }
+
+        if(is_callable([$object, 'validateSelfOrThrow'])){
+            $object->validateSelfOrThrow();
+        }
+
         return $object;
     }
 
