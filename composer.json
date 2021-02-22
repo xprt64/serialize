@@ -10,7 +10,7 @@
     }
   ],
   "require": {
-    "php": "^7.0",
+    "php": "^7.0 || ^8.0",
     "xprt64/code-analysis": "^1.1.4"
   },
   "require-dev": {
