@@ -113,10 +113,7 @@ class ObjectHydratorTest extends \PHPUnit_Framework_TestCase
 
 class MyObject
 {
-    /**
-     * @var MyNestedObject
-     */
-    private $nestedObject;
+    private ?MyNestedObject $nestedObject;
     /**
      * @var int
      */

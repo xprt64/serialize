@@ -19,7 +19,8 @@ class ObjectHydrator
 
     public function __construct(
         ObjectUnserializer $objectUnserializer
-    ) {
+    )
+    {
         $this->objectUnserializer = $objectUnserializer;
     }
 
@@ -246,7 +247,11 @@ class ObjectHydrator
                 $reflectionTypeString = null;
                 if ($reflectionType) {
                     $isArray = false;
-                    $reflectionTypeString = @$reflectionType->__toString();
+                    if ($reflectionType instanceof \ReflectionNamedType) {
+                        $reflectionTypeString = $reflectionType->getName();
+                    } else {
+                        $reflectionTypeString = @$reflectionType->__toString();
+                    }
                     if ($reflectionType->isBuiltin()) {
                         if ($reflectionTypeString === 'array') {
                             $isArray = true;
