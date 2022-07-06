@@ -50,7 +50,11 @@ class ObjectSerializer
 
         foreach ($properties as $property) {
             $property->setAccessible(true);
-            $unserializedValue = $property->getValue($anything);
+            try {
+                $unserializedValue = $property->getValue($anything);
+            } catch (\Error $e) {
+                $unserializedValue = null;
+            }
             $value = $unserializedValue;
             if (is_object($unserializedValue) || is_array($unserializedValue)) {
                 $value = $this->convert($unserializedValue);
