@@ -10,7 +10,7 @@ use Gica\Serialize\MongoObjectHydratorAdapters\MongoLocalAdapterLocator;
 use Gica\Serialize\ObjectHydrator\ObjectHydrator;
 use Gica\Serialize\ObjectHydrator\ObjectUnserializer\CompositeObjectUnserializer;
 
-class ObjectHydratorWithNestedArrayTest extends \PHPUnit_Framework_TestCase
+class ObjectHydratorWithNestedArrayTest extends \PHPUnit\Framework\TestCase
 {
 
     public function test_hydrateObject()
@@ -35,7 +35,7 @@ class ObjectHydratorWithNestedArrayTest extends \PHPUnit_Framework_TestCase
         $reconstructed = $sut->hydrateObject(MyObject::class, $document);
 
         $this->assertInstanceOf(MyObject::class, $reconstructed);
-        $this->assertInternalType('array', $reconstructed->getSomeArray());
+        $this->assertIsArray($reconstructed->getSomeArray());
         $this->assertSame($document['someArray'][0]['someNestedVar'], $reconstructed->getSomeArray()[0]->getSomeNestedVar());
         $this->assertSame($document['someArray'][1]['someNestedVar'], $reconstructed->getSomeArray()[1]->getSomeNestedVar());
         $this->assertSame($document['someArray'][2]['someNestedVar'], $reconstructed->getSomeArray()[2]->getSomeNestedVar());
@@ -51,7 +51,7 @@ class MyObject
     private $someArray;
 
     public function __construct(
-        array $someArray = null
+        ?array $someArray = null
     )
     {
         $this->someArray = $someArray;

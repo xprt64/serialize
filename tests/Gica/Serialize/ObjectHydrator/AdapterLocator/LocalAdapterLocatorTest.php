@@ -8,15 +8,17 @@ namespace tests\Gica\Serialize\ObjectHydrator\AdapterLocator {
     use Gica\Serialize\ObjectHydrator\AdapterLocator\LocalAdapterLocator;
     use Gica\Serialize\ObjectHydrator\Exception\AdapterNotFoundException;
 
-    class LocalAdapterLocatorTest extends \PHPUnit_Framework_TestCase
+    class LocalAdapterLocatorTest extends \PHPUnit\Framework\TestCase
     {
 
         public function test()
         {
-            $sut = $this->getMockForAbstractClass(LocalAdapterLocator::class);
-
-            $sut->method('getNamespace')
-                ->willReturn('SomeNamespace');
+            $sut = new class extends LocalAdapterLocator {
+                protected function getNamespace(): string
+                {
+                    return 'SomeNamespace';
+                }
+            };
 
             /** @var LocalAdapterLocator $sut */
             $this->assertSame(234, $sut->tryToUnserializeValue('SomeClass', 123));
@@ -28,10 +30,12 @@ namespace tests\Gica\Serialize\ObjectHydrator\AdapterLocator {
         {
             $this->expectException(AdapterNotFoundException::class);
 
-            $sut = $this->getMockForAbstractClass(LocalAdapterLocator::class);
-
-            $sut->method('getNamespace')
-                ->willReturn('SomeNamespaceThatDoNotExists');
+            $sut = new class extends LocalAdapterLocator {
+                protected function getNamespace(): string
+                {
+                    return 'SomeNamespaceThatDoNotExists';
+                }
+            };
 
             /** @var LocalAdapterLocator $sut */
             $sut->tryToUnserializeValue('SomeClass', 123);

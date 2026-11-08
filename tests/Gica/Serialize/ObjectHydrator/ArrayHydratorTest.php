@@ -4,7 +4,7 @@ namespace tests\Gica\Serialize\ObjectHydrator;
 
 use Gica\Serialize\ObjectHydrator\ArrayHydrator;
 
-class ArrayHydratorTest extends \PHPUnit_Framework_TestCase
+class ArrayHydratorTest extends \PHPUnit\Framework\TestCase
 {
 
     public function test()

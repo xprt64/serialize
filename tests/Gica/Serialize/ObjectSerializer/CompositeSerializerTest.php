@@ -5,7 +5,7 @@ namespace tests\Gica\Serialize\ObjectSerializer;
 use Gica\Serialize\ObjectSerializer\CompositeSerializer;
 use Gica\Serialize\ObjectSerializer\Exception\ValueNotSerializable;
 
-class CompositeSerializerTest extends \PHPUnit_Framework_TestCase
+class CompositeSerializerTest extends \PHPUnit\Framework\TestCase
 {
 
     public function test()

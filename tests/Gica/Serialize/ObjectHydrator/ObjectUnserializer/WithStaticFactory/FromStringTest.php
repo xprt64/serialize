@@ -5,7 +5,7 @@ namespace tests\Gica\Serialize\ObjectHydrator\ObjectUnserializer\WithStaticFacto
 use Gica\Serialize\ObjectHydrator\Exception\ValueNotUnserializable;
 use Gica\Serialize\ObjectHydrator\ObjectUnserializer\WithStaticFactory\FromString;
 
-class FromStringTest extends \PHPUnit_Framework_TestCase
+class FromStringTest extends \PHPUnit\Framework\TestCase
 {
 
     public function test()

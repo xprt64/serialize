@@ -13,12 +13,12 @@ use Gica\Serialize\ObjectSerializer\CompositeSerializer;
 use Gica\Serialize\ObjectSerializer\ObjectSerializer;
 
 
-class ObjectToArrayConverterTest extends \PHPUnit_Framework_TestCase
+class ObjectToArrayConverterTest extends \PHPUnit\Framework\TestCase
 {
     /** @var ObjectSerializer */
     private $sut;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->sut = new ObjectSerializer(
             new CompositeSerializer([
@@ -30,12 +30,12 @@ class ObjectToArrayConverterTest extends \PHPUnit_Framework_TestCase
     {
         $converted = $this->sut->convert(['test1', 'test2']);
 
-        $this->assertInternalType('array', $converted);
+        $this->assertIsArray($converted);
 
-        $this->assertInternalType('string', $converted[0]);
+        $this->assertIsString($converted[0]);
         $this->assertSame('test1', $converted[0]);
 
-        $this->assertInternalType('string', $converted[1]);
+        $this->assertIsString($converted[1]);
         $this->assertSame('test2', $converted[1]);
     }
 
@@ -45,7 +45,8 @@ class ObjectToArrayConverterTest extends \PHPUnit_Framework_TestCase
 
         $converted = $this->sut->convert($object);
 
-        $this->assertArraySubset(['a' => 'aaa', 'b' => 'bbb'], $converted);
+        $expected = ['a' => 'aaa', 'b' => 'bbb'];
+        $this->assertEquals($expected, array_intersect_key($converted, $expected));
     }
 
     public function test_MyObjectWithArrays()
@@ -54,7 +55,8 @@ class ObjectToArrayConverterTest extends \PHPUnit_Framework_TestCase
 
         $converted = $this->sut->convert($object);
 
-        $this->assertArraySubset(['arr' => [1, 2,]], $converted);
+        $expected = ['arr' => [1, 2,]];
+        $this->assertEquals($expected, array_intersect_key($converted, $expected));
     }
 
     public function test_MyObjectWithNestedObject()
@@ -63,7 +65,8 @@ class ObjectToArrayConverterTest extends \PHPUnit_Framework_TestCase
 
         $converted = $this->sut->convert($object);
 
-        $this->assertArraySubset(['myNestedObject' => ['variable' => 'aaa']], $converted);
+        $expected = ['myNestedObject' => ['variable' => 'aaa']];
+        $this->assertEquals($expected, array_intersect_key($converted, $expected));
     }
 }
 

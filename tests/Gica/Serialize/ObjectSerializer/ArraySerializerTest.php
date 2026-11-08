@@ -4,7 +4,7 @@ namespace tests\Gica\Serialize\ObjectSerializer;
 
 use Gica\Serialize\ObjectSerializer\ArraySerializer;
 
-class ArraySerializerTest extends \PHPUnit_Framework_TestCase
+class ArraySerializerTest extends \PHPUnit\Framework\TestCase
 {
 
     public function test()

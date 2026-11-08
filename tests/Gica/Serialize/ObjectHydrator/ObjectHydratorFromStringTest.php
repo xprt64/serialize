@@ -12,7 +12,7 @@ use Gica\Serialize\ObjectHydrator\ObjectUnserializer\CompositeObjectUnserializer
 use Gica\Serialize\ObjectHydrator\ObjectUnserializer\WithStaticFactory\FromPrimitive;
 use Gica\Serialize\ObjectHydrator\ObjectUnserializer\WithStaticFactory\FromString;
 
-class ObjectHydratorFromStringTest extends \PHPUnit_Framework_TestCase
+class ObjectHydratorFromStringTest extends \PHPUnit\Framework\TestCase
 {
 
     public function test_hydrateObject()

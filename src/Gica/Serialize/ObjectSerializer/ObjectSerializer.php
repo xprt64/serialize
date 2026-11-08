@@ -49,7 +49,6 @@ class ObjectSerializer
         ];
 
         foreach ($properties as $property) {
-            $property->setAccessible(true);
             try {
                 $unserializedValue = $property->getValue($anything);
             } catch (\Error $e) {

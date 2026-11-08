@@ -9,7 +9,7 @@ namespace tests\unit\Gica\Serialize\ObjectHydratorWithPrivateParentPropertiesTes
     use Gica\Serialize\ObjectHydrator\ObjectUnserializer\CompositeObjectUnserializer;
     use ns2\SomeNestedObject;
 
-    class ObjectHydratorWithPrivateParentPropertiesTest extends \PHPUnit_Framework_TestCase
+    class ObjectHydratorWithPrivateParentPropertiesTest extends \PHPUnit\Framework\TestCase
     {
 
         public function test_hydrateObject()

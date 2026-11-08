@@ -10,7 +10,7 @@ use Gica\Serialize\ObjectHydrator\ObjectHydrator;
 use Gica\Serialize\ObjectHydrator\ObjectUnserializer\CompositeObjectUnserializer;
 use Gica\Serialize\ObjectHydrator\ObjectUnserializer\DateTimeImmutableFromString;
 
-class ObjectHydratorTest extends \PHPUnit_Framework_TestCase
+class ObjectHydratorTest extends \PHPUnit\Framework\TestCase
 {
 
     public function test_hydrateObject()
@@ -86,15 +86,15 @@ class ObjectHydratorTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider scalarValues
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('scalarValues')]
     public function test_hydrateProperty_scalar($type, $input, $expected)
     {
         $sut = new ObjectHydrator(new CompositeObjectUnserializer([]));
         $this->assertSame($expected, $sut->hydrateObject($type, $input));
     }
 
-    public function scalarValues()
+    public static function scalarValues()
     {
         return [
             ['string', 'a', 'a'],
@@ -163,7 +163,7 @@ class MyObject
         ?string $someString,
         ?\DateTimeImmutable $dateTimeImmutable,
         $someVar = null,
-        array $someArray = null,
+        ?array $someArray = null,
         bool $someBool = false,
         $someNull = null
     )

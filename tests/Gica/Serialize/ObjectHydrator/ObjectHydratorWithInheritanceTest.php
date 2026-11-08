@@ -10,7 +10,7 @@ use Gica\Serialize\MongoObjectHydratorAdapters\MongoLocalAdapterLocator;
 use Gica\Serialize\ObjectHydrator\ObjectHydrator;
 use Gica\Serialize\ObjectHydrator\ObjectUnserializer\CompositeObjectUnserializer;
 
-class ObjectHydratorWithInheritanceTest extends \PHPUnit_Framework_TestCase
+class ObjectHydratorWithInheritanceTest extends \PHPUnit\Framework\TestCase
 {
 
     public function test_hydrateObject()

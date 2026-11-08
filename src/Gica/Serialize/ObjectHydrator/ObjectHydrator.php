@@ -171,7 +171,7 @@ class ObjectHydrator
     private function _detectClassNameFromPropertyComment(\ReflectionClass $reflectionClass, string $propertyName)
     {
         $shortType = $this->parseTypeFromPropertyVarDoc($reflectionClass, $propertyName);
-        $shortType = rtrim($shortType, '[]');
+        $shortType = rtrim((string)$shortType, '[]');
         if ($shortType === '' || null === $shortType) {
             return null;
         }
@@ -218,9 +218,7 @@ class ObjectHydrator
                 if (null === $result && ($property->getType() && !$property->getType()->allowsNull())) {
                     continue;
                 }
-                $property->setAccessible(true);
                 $property->setValue($object, $result);
-                $property->setAccessible(false);
             } catch (\Exception $exception) {
                 continue;
             }

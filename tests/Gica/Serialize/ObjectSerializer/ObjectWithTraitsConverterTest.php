@@ -13,12 +13,12 @@ use Gica\Serialize\ObjectSerializer\CompositeSerializer;
 use Gica\Serialize\ObjectSerializer\ObjectSerializer;
 
 
-class ObjectWithTraitsConverterTest extends \PHPUnit_Framework_TestCase
+class ObjectWithTraitsConverterTest extends \PHPUnit\Framework\TestCase
 {
     /** @var ObjectSerializer */
     private $sut;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->sut = new ObjectSerializer(
             new CompositeSerializer([
@@ -32,14 +32,15 @@ class ObjectWithTraitsConverterTest extends \PHPUnit_Framework_TestCase
 
         $converted = $this->sut->convert($object);
 
-        $this->assertArraySubset([
+        $expected = [
             'a'    => 'a',
             'b'    => 'b',
             't1_a' => 't1_a',
             't1_b' => 't1_b',
             't2_a' => 't2_a',
             't2_b' => 't2_b',
-        ], $converted);
+        ];
+        $this->assertEquals($expected, array_intersect_key($converted, $expected));
     }
 }
 

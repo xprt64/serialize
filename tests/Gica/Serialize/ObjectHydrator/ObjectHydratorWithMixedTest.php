@@ -10,7 +10,7 @@ use Gica\Serialize\ObjectHydrator\ObjectHydrator;
 use Gica\Serialize\ObjectHydrator\ObjectUnserializer\CompositeObjectUnserializer;
 use Gica\Serialize\ObjectHydrator\ObjectUnserializer\DateTimeImmutableFromString;
 
-class ObjectHydratorWithMixedTest extends \PHPUnit_Framework_TestCase
+class ObjectHydratorWithMixedTest extends \PHPUnit\Framework\TestCase
 {
 
     public function test_hydrateObject()
