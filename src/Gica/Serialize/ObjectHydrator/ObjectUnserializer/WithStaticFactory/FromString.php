@@ -15,6 +15,7 @@ class FromString implements ObjectUnserializer
     /**
      * @inheritdoc
      */
+    #[\Override]
     public function tryToUnserializeValue(string $objectClassName, $serializedValue)
     {
         if ((is_string($serializedValue) || is_callable([$serializedValue, '__toString']))) {

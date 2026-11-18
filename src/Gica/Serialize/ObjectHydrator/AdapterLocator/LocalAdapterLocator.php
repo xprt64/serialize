@@ -22,6 +22,7 @@ abstract class LocalAdapterLocator implements ObjectUnserializer
         return null;
     }
 
+    #[\Override]
     public function tryToUnserializeValue(string $objectClassName, $serializedValue)
     {
         $adapter = $this->locateUnserializerForClass($objectClassName, $serializedValue);

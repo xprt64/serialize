@@ -25,6 +25,7 @@ class CompositeObjectUnserializer implements ObjectUnserializer
         $this->unserializers = $unserializers;
     }
 
+    #[\Override]
     public function tryToUnserializeValue(string $objectClassName, $serializedValue)
     {
         foreach ($this->unserializers as $adapterLocator) {

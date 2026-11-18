@@ -16,6 +16,7 @@ class DateTimeImmutableFromString implements ObjectUnserializer
      * @return mixed
      * @throws ValueNotUnserializable
      */
+    #[\Override]
     public function tryToUnserializeValue(string $objectClassName, $serializedValue)
     {
         if (is_string($serializedValue)) {

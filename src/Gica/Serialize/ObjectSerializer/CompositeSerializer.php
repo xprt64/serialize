@@ -25,6 +25,7 @@ class CompositeSerializer implements Serializer
         $this->serializers = $serializers;
     }
 
+    #[\Override]
     public function serialize($value)
     {
         foreach ($this->serializers as $serializer) {

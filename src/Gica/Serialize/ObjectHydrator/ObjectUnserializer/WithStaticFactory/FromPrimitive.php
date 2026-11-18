@@ -15,6 +15,7 @@ class FromPrimitive implements ObjectUnserializer
     /**
      * @inheritdoc
      */
+    #[\Override]
     public function tryToUnserializeValue(string $objectClassName, $serializedValue)
     {
         if (is_scalar($serializedValue) || is_array($serializedValue)) {
