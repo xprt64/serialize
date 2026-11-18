@@ -190,10 +190,10 @@ class ObjectHydrator
 
     private function resolveShortClassName($shortName, \ReflectionClass $contextClass)
     {
-        $className = (new FqnResolver())->resolveShortClassName($shortName, $contextClass);
+        $className = new FqnResolver()->resolveShortClassName($shortName, $contextClass);
         if (!class_exists($className)) {
             foreach ($contextClass->getTraits() as $trait) {
-                $className = (new FqnResolver())->resolveShortClassName($shortName, $trait);
+                $className = new FqnResolver()->resolveShortClassName($shortName, $trait);
                 if (class_exists($className)) {
                     return $className;
                 }

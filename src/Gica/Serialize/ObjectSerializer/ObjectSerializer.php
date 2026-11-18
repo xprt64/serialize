@@ -25,9 +25,7 @@ class ObjectSerializer
     public function convert($anything)
     {
         if (is_array($anything)) {
-            return array_map(function ($item) {
-                return $this->convert($item);
-            }, $anything);
+            return array_map($this->convert(...), $anything);
         }
 
         if (!is_object($anything)) {
@@ -60,7 +58,7 @@ class ObjectSerializer
             }
             $result[$property->getName()] = $value;
             if (is_object($unserializedValue)) {
-                $result['@classes'][$property->getName()] = get_class($unserializedValue);
+                $result['@classes'][$property->getName()] = $unserializedValue::class;
             }
         }
 

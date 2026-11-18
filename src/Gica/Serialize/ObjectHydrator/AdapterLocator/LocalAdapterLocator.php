@@ -50,7 +50,7 @@ abstract class LocalAdapterLocator implements ObjectUnserializer
 
     private function getShortClassName($serializedValue): string
     {
-        $parts = explode('\\', get_class($serializedValue));
+        $parts = explode('\\', $serializedValue::class);
 
         return array_pop($parts);
     }
