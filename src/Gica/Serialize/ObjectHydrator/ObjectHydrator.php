@@ -29,23 +29,24 @@ class ObjectHydrator
      * @param $serializedValue
      * @return object
      */
+    private const BUILTIN = ['string' => 1, 'mixed' => 1, 'int' => 1, 'float' => 1, 'bool' => 1, 'boolean' => 1, 'null' => 1];
+
     public function hydrateObject(string $objectClass, $serializedValue)
     {
-        try {
+        if (isset(self::BUILTIN[$objectClass])) {
             return $this->castValueToBuiltinType($objectClass, $serializedValue);
-        } catch (ValueNotScalar $exception) {
-            try {
-                return $this->objectUnserializer->tryToUnserializeValue($objectClass, $serializedValue);
-            } catch (AdapterNotFoundException $exception) {
-                return $this->hydrateObjectByReflection($objectClass, $serializedValue);
-            }
+        }
+        try {
+            return $this->objectUnserializer->tryToUnserializeValue($objectClass, $serializedValue);
+        } catch (AdapterNotFoundException $exception) {
+            return $this->hydrateObjectByReflection($objectClass, $serializedValue);
         }
     }
 
     private function hydrateObjectByReflection(string $objectClass, $document)
     {
-        $reflectionClass = new \ReflectionClass($objectClass);
-
+        static $reflections = [];
+        $reflectionClass = $reflections[$objectClass] ??= new \ReflectionClass($objectClass);
         $object = unserialize($this->getEmptyObject($objectClass));
 
         $this->matchAndSetNonConstructorProperties($reflectionClass, $object, $document);
@@ -237,44 +238,20 @@ class ObjectHydrator
             return null;
         }
 
-        $isArray = null;
-
         if (!$actualClassName) {
-            try {
-                $reflectionType = $this->detectClassNameFromPropertyType($reflectionClass, $propertyName);
-                $reflectionTypeString = null;
-                if ($reflectionType) {
-                    $isArray = false;
-                    if ($reflectionType instanceof \ReflectionNamedType) {
-                        $reflectionTypeString = $reflectionType->getName();
-                    } else {
-                        $reflectionTypeString = @$reflectionType->__toString();
-                    }
-                    if ($reflectionType->isBuiltin()) {
-                        if ($reflectionTypeString === 'array') {
-                            $isArray = true;
-                            unset($reflectionTypeString);
-                        } else {
-                            return $this->castValueToBuiltinType($reflectionTypeString, $document);
-                        }
-                    }
-                }
-                $propertyClassName = $reflectionTypeString ?? $this->detectClassNameFromPropertyComment($reflectionClass, $propertyName);
-            } catch (\Exception $exception) {
-                $propertyClassName = null;
+            $planKey = $reflectionClass->name . '::' . $propertyName;
+            $plan = self::$plans[$planKey] ??= $this->computePropertyPlan($reflectionClass, $propertyName);
+            [$builtin, $propertyClassName, $isArray] = $plan;
+            if (null !== $builtin) {
+                return $this->castValueToBuiltinType($builtin, $document);
             }
-
-            if (null === $propertyClassName || 'null' === $propertyClassName) {
+            if (null === $propertyClassName) {
                 return $document;
             }
         } else {
             $propertyClassName = $actualClassName;
-        }
-
-        if (null === $isArray) {
             $isArray = $this->detectIfPropertyIsArrayFromComment($reflectionClass, $propertyName);
         }
-
         if ($isArray) {
             $result = [];
             foreach ($document as $k => $item) {
@@ -286,6 +263,45 @@ class ObjectHydrator
 
         return $result;
     }
+
+    private static array $plans = [];
+
+    /** @return array{0: ?string, 1: ?string, 2: bool} [builtin type to cast to, class name of the value(s), is a list] - the same decisions hydrateProperty took on every call */
+    private function computePropertyPlan(\ReflectionClass $reflectionClass, string $propertyName): array
+    {
+        $isArray = null;
+        try {
+            $reflectionType = $this->detectClassNameFromPropertyType($reflectionClass, $propertyName);
+            $reflectionTypeString = null;
+            if ($reflectionType) {
+                $isArray = false;
+                if ($reflectionType instanceof \ReflectionNamedType) {
+                    $reflectionTypeString = $reflectionType->getName();
+                } else {
+                    $reflectionTypeString = @$reflectionType->__toString();
+                }
+                if ($reflectionType->isBuiltin()) {
+                    if ($reflectionTypeString === 'array') {
+                        $isArray = true;
+                        unset($reflectionTypeString);
+                    } else {
+                        return [$reflectionTypeString, null, false];
+                    }
+                }
+            }
+            $propertyClassName = $reflectionTypeString ?? $this->detectClassNameFromPropertyComment($reflectionClass, $propertyName);
+        } catch (\Exception $exception) {
+            $propertyClassName = null;
+        }
+        if (null === $propertyClassName || 'null' === $propertyClassName) {
+            return [null, null, false];
+        }
+        if (null === $isArray) {
+            $isArray = $this->detectIfPropertyIsArrayFromComment($reflectionClass, $propertyName);
+        }
+        return [null, $propertyClassName, $isArray];
+    }
+
 
     /**
      * @param $shortType
