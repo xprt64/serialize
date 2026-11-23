@@ -7,6 +7,7 @@ namespace Gica\Serialize\ObjectHydrator;
 
 
 use Gica\CodeAnalysis\Shared\FqnResolver;
+use Gica\Serialize\ObjectHydrator\Compiled\CompiledHydrators;
 use Gica\Serialize\ObjectHydrator\Exception\AdapterNotFoundException;
 use Gica\Serialize\ObjectHydrator\Exception\ValueNotScalar;
 
@@ -17,11 +18,15 @@ class ObjectHydrator
      */
     private $objectUnserializer;
 
+    private ?CompiledHydrators $compiled;
+
     public function __construct(
-        ObjectUnserializer $objectUnserializer
+        ObjectUnserializer $objectUnserializer,
+        ?CompiledHydrators $compiled = null
     )
     {
         $this->objectUnserializer = $objectUnserializer;
+        $this->compiled = $compiled;
     }
 
     /**
@@ -45,11 +50,16 @@ class ObjectHydrator
 
     private function hydrateObjectByReflection(string $objectClass, $document)
     {
-        static $reflections = [];
-        $reflectionClass = $reflections[$objectClass] ??= new \ReflectionClass($objectClass);
         $object = unserialize($this->getEmptyObject($objectClass));
 
-        $this->matchAndSetNonConstructorProperties($reflectionClass, $object, $document);
+        $compiled = $this->compiled?->hydratorFor($objectClass);
+        if ($compiled) {
+            $compiled($this, $object, $document);
+        } else {
+            static $reflections = [];
+            $reflectionClass = $reflections[$objectClass] ??= new \ReflectionClass($objectClass);
+            $this->matchAndSetNonConstructorProperties($reflectionClass, $object, $document);
+        }
 
         if (is_callable([$object, 'isNull'])) {
             if ($object->isNull()) {
@@ -264,6 +274,30 @@ class ObjectHydrator
         return $result;
     }
 
+    /** the key => value pairs a `foreach` over the document would visit (arrays, Traversables like BSONDocument, plain objects' public properties) */
+    public static function documentToArray($document): array
+    {
+        if (is_array($document)) {
+            return $document;
+        }
+        if ($document instanceof \Traversable) {
+            return iterator_to_array($document);
+        }
+        return is_object($document) ? get_object_vars($document) : [];
+    }
+
+    /**
+     * What the hydrator decides for a property, for the code generator (the same decisions, taken once):
+     * [builtin type to cast to (or null), class of the value(s) (or null = the raw value), is a list by the native type or the docblock, is a list by the docblock only
+     * (when the document names the class itself, `@classes`)].
+     * @return array{0: ?string, 1: ?string, 2: bool, 3: bool}
+     */
+    public function planForCompiler(\ReflectionClass $reflectionClass, string $propertyName): array
+    {
+        [$builtin, $class, $isList] = $this->computePropertyPlan($reflectionClass, $propertyName);
+        return [$builtin, $class, $isList, (bool)$this->detectIfPropertyIsArrayFromComment($reflectionClass, $propertyName)];
+    }
+
     private static array $plans = [];
 
     /** @return array{0: ?string, 1: ?string, 2: bool} [builtin type to cast to, class name of the value(s), is a list] - the same decisions hydrateProperty took on every call */
@@ -284,8 +318,10 @@ class ObjectHydrator
                     if ($reflectionTypeString === 'array') {
                         $isArray = true;
                         unset($reflectionTypeString);
-                    } else {
+                    } elseif (isset(self::BUILTIN[$reflectionTypeString])) {
                         return [$reflectionTypeString, null, false];
+                    } else {
+                        return [null, null, false]; // object, iterable, callable, ...: the cast threw ValueNotScalar and the raw value was kept
                     }
                 }
             }
