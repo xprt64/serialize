@@ -189,15 +189,19 @@ class ObjectHydrator
         return ltrim($this->resolveShortClassName($shortType, $reflectionClass), '\\');
     }
 
+    /** the short name of a docblock type, resolved with the imports of the class, of its traits, then of its parent classes and their traits (a property may be declared up there) */
     private function resolveShortClassName($shortName, \ReflectionClass $contextClass)
     {
         $className = new FqnResolver()->resolveShortClassName($shortName, $contextClass);
-        if (!class_exists($className)) {
-            foreach ($contextClass->getTraits() as $trait) {
-                $className = new FqnResolver()->resolveShortClassName($shortName, $trait);
+        for ($class = $contextClass; $class && !class_exists($className); $class = $class->getParentClass()) {
+            if ($class !== $contextClass) {
+                $className = new FqnResolver()->resolveShortClassName($shortName, $class);
+            }
+            foreach ($class->getTraits() as $trait) {
                 if (class_exists($className)) {
-                    return $className;
+                    break;
                 }
+                $className = new FqnResolver()->resolveShortClassName($shortName, $trait);
             }
         }
         return $className;
