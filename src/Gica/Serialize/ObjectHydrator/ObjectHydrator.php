@@ -9,7 +9,6 @@ namespace Gica\Serialize\ObjectHydrator;
 use Gica\CodeAnalysis\Shared\FqnResolver;
 use Gica\Serialize\ObjectHydrator\Compiled\CompiledHydrators;
 use Gica\Serialize\ObjectHydrator\Exception\AdapterNotFoundException;
-use Gica\Serialize\ObjectHydrator\Mapped\ClassMaps;
 use Gica\Serialize\ObjectHydrator\Exception\ValueNotScalar;
 
 class ObjectHydrator
@@ -20,17 +19,14 @@ class ObjectHydrator
     private $objectUnserializer;
 
     private ?CompiledHydrators $compiled;
-    private ?ClassMaps $maps;
 
     public function __construct(
         ObjectUnserializer $objectUnserializer,
-        ?CompiledHydrators $compiled = null,
-        ?ClassMaps $maps = null
+        ?CompiledHydrators $compiled = null
     )
     {
         $this->objectUnserializer = $objectUnserializer;
         $this->compiled = $compiled;
-        $this->maps = $maps;
     }
 
     /**
@@ -57,11 +53,8 @@ class ObjectHydrator
         $object = unserialize($this->getEmptyObject($objectClass));
 
         $compiled = $this->compiled?->hydratorFor($objectClass);
-        $map = $compiled ? null : $this->maps?->mapFor($objectClass);
         if ($compiled) {
             $compiled($this, $object, $document);
-        } elseif ($map) {
-            $this->hydrateByMap($object, $document, $map, $objectClass);
         } else {
             static $reflections = [];
             $reflectionClass = $reflections[$objectClass] ??= new \ReflectionClass($objectClass);
@@ -79,99 +72,6 @@ class ObjectHydrator
         }
 
         return $object;
-    }
-
-    /**
-     * The properties of $object from the document, as the reflection path does it but with the decisions read from the map (see ClassMaps) instead of taken by reflection.
-     * @param array<string, array<string, mixed>> $map
-     */
-    private function hydrateByMap(object $object, $document, array $map, string $class): void
-    {
-        static $setters = [];
-        $values = \is_array($document) ? $document : self::documentToArray($document);
-        $classes = $values['@classes'] ?? null;
-        $assign = [];
-        foreach ($map as $name => $entry) {
-            if (!\array_key_exists($name, $values)) {
-                continue;
-            }
-            try {
-                $result = $this->mappedValue($values[$name], $entry, $classes, $name);
-                if (null !== $result || isset($entry['null'])) {
-                    $assign[$entry['in'] ?? $class][$name] = $result;
-                }
-            } catch (\Exception) {
-            }
-        }
-        // one call per declaring class (a function bound to it reaches its private properties) instead of one per property
-        foreach ($assign as $declaring => $properties) {
-            ($setters[$declaring] ??= \Closure::bind(static function (object $o, array $properties): void {
-                foreach ($properties as $name => $value) {
-                    $o->$name = $value;
-                }
-            }, null, $declaring))($object, $properties);
-        }
-    }
-
-    private function mappedValue(mixed $value, array $entry, $classes, string $name): mixed
-    {
-        if (null === $value) {
-            return null;
-        }
-        $list = isset($entry['list']);
-        $listDoc = isset($entry['listDoc']);
-        if ($classes && isset($classes[$name]) && ($hint = $classes[$name])) {
-            // the document names the class of the value: the declared one (nearly always) is built the fast way, another one by hydrateObject()
-            if (isset($entry['class']) && $hint === $entry['class'] && $list === $listDoc) {
-                return $this->mappedObject($entry['class'], $value, $entry['from'] ?? null, $listDoc);
-            }
-            return $listDoc ? $this->mappedObjects($hint, $value, null) : $this->hydrateObject($hint, $value);
-        }
-        if (isset($entry['type'])) {
-            if ($list) {
-                $result = [];
-                foreach ($value as $i => $item) {
-                    $result[$i] = $this->castValueToBuiltinType($entry['type'], $item);
-                }
-                return $result;
-            }
-            return $this->castValueToBuiltinType($entry['type'], $value);
-        }
-        if (!isset($entry['class'])) {
-            return $value;
-        }
-        return $this->mappedObject($entry['class'], $value, $entry['from'] ?? null, $list);
-    }
-
-    private function mappedObject(string $class, mixed $value, ?array $from, bool $list): mixed
-    {
-        return $list ? $this->mappedObjects($class, $value, $from) : $this->mappedOne($class, $value, $from);
-    }
-
-    private function mappedObjects(string $class, mixed $value, ?array $from): array
-    {
-        $result = [];
-        foreach ($value as $i => $item) {
-            $result[$i] = $this->mappedOne($class, $item, $from);
-        }
-        return $result;
-    }
-
-    /** one value: a builtin is cast, a class with the standard static factories is built by a direct call (same precedence as FromPrimitive then FromString), the rest by hydrateObject() */
-    private function mappedOne(string $class, mixed $value, ?array $from): mixed
-    {
-        if (isset(self::BUILTIN[$class])) {
-            return $this->castValueToBuiltinType($class, $value);
-        }
-        if ($from) {
-            if (in_array('primitive', $from, true) && (is_scalar($value) || is_array($value))) {
-                return $class::fromPrimitive($value);
-            }
-            if (in_array('string', $from, true) && (is_string($value) || $value instanceof \Stringable)) {
-                return $class::fromString((string)$value);
-            }
-        }
-        return $this->hydrateObject($class, $value);
     }
 
     private function getEmptyObject(string $className)

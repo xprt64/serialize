@@ -5,8 +5,6 @@ namespace tests\unit\Gica\Serialize\ObjectHydrator\Compiled;
 
 use Gica\Serialize\ObjectHydrator\Compiled\DirectoryCompiledHydrators;
 use Gica\Serialize\ObjectHydrator\Compiled\HydratorCompiler;
-use Gica\Serialize\ObjectHydrator\Mapped\ClassMapBuilder;
-use Gica\Serialize\ObjectHydrator\Mapped\PhpFileClassMaps;
 use Gica\Serialize\ObjectHydrator\ObjectHydrator;
 use Gica\Serialize\ObjectHydrator\ObjectUnserializer\CompositeObjectUnserializer;
 use Gica\Serialize\ObjectHydrator\ObjectUnserializer\WithStaticFactory\FromPrimitive;
@@ -220,42 +218,6 @@ class CompiledHydratorTest extends TestCase
     {
         [$reference, $compiled] = $this->hydrators();
         $this->assertSame($this->outcome($reference, $class, $document), $this->outcome($compiled, $class, $document));
-    }
-
-    private function mapped(bool $standardFactories): array
-    {
-        $reference = new ObjectHydrator($this->unserializer());
-        $builder = new ClassMapBuilder($reference, $standardFactories);
-        $export = $builder->export(self::CLASSES);
-        mkdir($this->dir, 0775, true);
-        file_put_contents($this->dir . '/maps.php', $export['source']);
-        return [$reference, new ObjectHydrator($this->unserializer(), null, new PhpFileClassMaps($this->dir . '/maps.php')), $export, $builder];
-    }
-
-    public function test_the_maps_skip_what_cannot_be_mapped_and_carry_a_signature_per_class()
-    {
-        [, , $export, $builder] = $this->mapped(true);
-        $this->assertContains(Child::class, $export['mapped']);
-        $this->assertContains(ChildOfPrivate::class, $export['mapped']);
-        $this->assertArrayHasKey(WithUnion::class, $export['skipped']);
-        $this->assertArrayHasKey(\stdClass::class, $export['skipped']);
-        $signatures = ClassMapBuilder::signaturesIn($export['source']);
-        $this->assertSame($builder->signature(Child::class), $signatures[Child::class]);
-        $this->assertCount(count($export['mapped']), $signatures);
-    }
-
-    #[DataProvider('documents')]
-    public function test_the_map_driven_hydrator_builds_exactly_what_the_reflection_one_builds(string $class, $document)
-    {
-        [$reference, $mapped] = $this->mapped(false);
-        $this->assertSame($this->outcome($reference, $class, $document), $this->outcome($mapped, $class, $document));
-    }
-
-    #[DataProvider('documents')]
-    public function test_the_map_driven_hydrator_with_the_static_factories_is_still_the_same(string $class, $document)
-    {
-        [$reference, $mapped] = $this->mapped(true);
-        $this->assertSame($this->outcome($reference, $class, $document), $this->outcome($mapped, $class, $document));
     }
 
     #[DataProvider('documents')]
